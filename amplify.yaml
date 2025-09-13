@@ -1,22 +1,22 @@
 version: 1
+backend:
+  phases:
+    build:
+      commands:
+        - npm install
+        - echo "Build completed"
 frontend:
   phases:
     preBuild:
       commands:
-        - npm ci
+        - echo "No frontend build needed for backend-only app"
     build:
       commands:
-        - npm run build
+        - echo "Skipping frontend build"
   artifacts:
-    baseDirectory: .next
+    baseDirectory: /
     files:
-      - '*/'
+      - '**/*'
   cache:
     paths:
-      - node_modules/*/
-      - .next/cache/*/
-  environment:
-    variables:
-      PORT: 11000 
-      CORS_ORIGIN: *
-      MONGODB_URI: mongodb+srv://practise:ankit0202@cluster0.ivux2.mongodb.net
+      - node_modules/**/*
