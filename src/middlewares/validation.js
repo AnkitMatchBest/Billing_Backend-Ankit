@@ -24,7 +24,7 @@ export const validatePaymentRequest = (req, res, next) => {
   }
 
   // Validate currency
-  const validCurrencies = ['usd', 'eur', 'gbp', 'cad', 'aud'];
+  const validCurrencies = ['usd', 'eur', 'gbp', 'cad', 'aud', 'inr'];
   if (currency && !validCurrencies.includes(currency.toLowerCase())) {
     return res.status(400).json({
       success: false,

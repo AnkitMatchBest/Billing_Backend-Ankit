@@ -1,96 +1,49 @@
 import {ApiError} from '../utils/ApiError.js';
 import {ApiResponse} from '../utils/ApiResponse.js';
 import {asyncHandler} from '../utils/asyncHandler.js';
-import { v4 as uuidv4 } from 'uuid';
-import { PaymentSchema } from '../models/order.model.js'
+
+import {OrderSchema} from "../models/orders.model.js"
+import { stripe } from '../config/stripe.config.js';
 
 
-//const StripeService = require('../services/stripeService');
-//export const processPayment = (asyncHandler(async (req, res)))
-export class PaymentController {
-  // Create payment intent
-  //static createPaymentIntent = asyncHandler(async(req, res))
-  static async createPaymentIntent(req, res) {
-    try {
-      const { amount, currency = 'usd' } = req.body;
+export const createPaymentIntent = asyncHandler(async (req, res) => {
+  const { B_amount, B_currency = 'usd', B_planId, B_email } = req.body;
 
-      const result = await StripeService.createPaymentIntent(amount, currency);
+  //Need to check planId exist or not
+  /*
+  if doesn't exit send a response that can not proceed.
+  if doesn't exit throw an error with error code 404 and msg plan doesn't exit.  
+  */
+  const d = Date.now()
+  const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(B_amount * 100), // Convert to cents
+        currency: B_currency,
+        automatic_payment_methods: {
+          enabled: true,
+        },
+  });
 
-      res.json({
-        success: true,
-        clientSecret: result.clientSecret,
-        paymentIntentId: result.paymentIntentId
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: error.message
-      });
-    }
+  //Save it on DB
+  const {id, client_secret} = paymentIntent
+
+  const order = await OrderSchema.create({
+    B_bussinessEmail: B_email,
+    B_planId ,
+    B_amount,
+    B_currency,
+    B_clientSecret: client_secret,
+    B_stripePaymentIntentId: id
+  })
+
+  if (!order) {
+    throw new ApiError(500, `Db unable to save`)
   }
 
-  // Process payment
-  //static async processPayment(asyncHandler)
-  /*static async processPayment(req, res) {
-    try {
-      const { amount, currency, paymentMethod, customer } = req.body;
 
-      // First create customer
-      const customerResult = await StripeService.createCustomer(
-        customer.email,
-        customer.name,
-        paymentMethod.id
-      );
+  console.log(Date.now() - d)
 
-      // Then process payment
-      const paymentResult = await StripeService.processPayment(
-        amount,
-        currency || 'usd',
-        paymentMethod.id,
-        {
-          ...customer,
-          customerId: customerResult.customerId
-        }
-      );
+  return ApiResponse.send(res, `Intent created for plan with planId ${B_planId}`, 201, client_secret)
 
-      res.json({
-        success: paymentResult.success,
-        status: paymentResult.status,
-        paymentIntentId: paymentResult.paymentIntentId,
-        message: paymentResult.message,
-        customerId: customerResult.customerId
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: error.message
-      });
-    }
-  }*/
+})
 
-  // Confirm payment status
-  static async confirmPayment(req, res) {
-    try {
-      const { paymentIntentId } = req.body;
-
-      const result = await StripeService.confirmPayment(paymentIntentId);
-
-      res.json({
-        success: result.status === 'succeeded',
-        status: result.status,
-        paymentIntent: result.paymentIntent
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: error.message
-      });
-    }
-  }
-
-  // Health check
-  static async healthCheck(req, res) {
-    return ApiResponse.send(res, `Billing service is running`, 200)
-  }
-}
 

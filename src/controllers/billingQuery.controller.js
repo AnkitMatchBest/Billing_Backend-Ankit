@@ -19,9 +19,9 @@ export const postchatbotQuery = asyncHandler(async (req, res) => {
         B_billingQueryMsg: B_billingQueryMsg
     });
     if (!result) {
-        throw new ApiError(500, 'Something went wrong.');
+        throw new ApiError(500, `Db unable to save`);
     }
-    console.log('Tarun')
+
     return ApiResponse.send(res, `query registered and your billing queryId is`, 201, result.B_queryId)
     
 
@@ -48,7 +48,7 @@ export const getchatbotQuery = asyncHandler(async (req, res) => {
         throw new ApiError(500, `Server unable to fetch the data`)
     }
     
-    console.log('Raina')
+    
 
 
     return ApiResponse.send(res, `leads fetched for page no. ${page}`, 200, leads)
@@ -68,7 +68,7 @@ export const assignchatbotQuery = asyncHandler(async (req, res) => {
         throw new ApiError(500, `Query not assigned please try again`)
 
     }
-    console.log('Ayush')
+    
     
    return ApiResponse.send(res, `Query Assigned`, 201)
 
